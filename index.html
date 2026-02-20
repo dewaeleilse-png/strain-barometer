@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Strain Barometer</title>
+
+  <!-- Optional PWA (reuse your existing manifest/service worker if you want) -->
+  <meta name="theme-color" content="#0b0f14">
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --muted:#9fb0c3;
+      --text:#e8eef6;
+      --border:rgba(255,255,255,.10);
+      --good:#29d37b;
+      --warn:#ffd166;
+      --bad:#ff5c7a;
+      --accent:#6aa9ff;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --pad: 16px;
+      font-synthesis-weight: none;
+    }
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 800px at 20% 0%, rgba(106,169,255,.18), transparent 50%),
+        radial-gradient(900px 700px at 100% 10%, rgba(41,211,123,.10), transparent 50%),
+        var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      line-height:1.35;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+      padding-bottom: 40px;
+    }
+
+    header{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin: 10px 0 16px 0;
+      flex-wrap:wrap;
+    }
+
+    h1{ margin:0; font-size: 20px; letter-spacing:.2px; }
+    .sub{ color: var(--muted); font-size: 13px; margin-top:4px; }
+
+    .pillRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+    .pill strong{ color: var(--text); font-weight:600; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+    .col{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+      header{ flex-direction:column; align-items:flex-start; gap:8px; }
+      .pillRow{ justify-content:flex-start; gap:6px; }
+      .pill{ padding:6px 8px; font-size:11px; }
+      h1{ font-size:18px; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: var(--pad);
+    }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .row.space{ justify-content:space-between; }
+    .label{ color: var(--muted); font-size: 12px; }
+    .big{ font-size: 34px; font-weight: 750; letter-spacing:.2px; }
+    .small{ font-size: 12px; color: var(--muted); }
+    .hr{ height:1px; background: var(--border); margin: 12px 0; }
+
+    .barWrap{
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(0,0,0,.25);
+      overflow:hidden;
+      height: 16px;
+      position: relative;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: var(--accent);
+      transition: width .25s ease;
+    }
+    .bar.good{ background: var(--good); }
+    .bar.warn{ background: var(--warn); }
+    .bar.bad{ background: var(--bad); }
+
+    .msg{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+    }
+    .msg .tone{ font-weight:700; }
+    .msg.good{ border-color: rgba(41,211,123,.35); }
+    .msg.warn{ border-color: rgba(255,209,102,.35); }
+    .msg.bad{ border-color: rgba(255,92,122,.35); }
+
+    input, button, select{ font: inherit; color: var(--text); }
+    button{
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+    }
+    button:hover{ background: rgba(255,255,255,.09); }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: rgba(106,169,255,.18);
+      border-color: rgba(106,169,255,.38);
+    }
+    button.danger{
+      background: rgba(255,92,122,.14);
+      border-color: rgba(255,92,122,.38);
+    }
+    button.ghost{ background: transparent; }
+
+    .chip{
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      white-space: nowrap;
+    }
+
+    /* Form controls */
+    .fieldGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 520px){
+      .fieldGrid{ grid-template-columns: 1fr; gap:8px; }
+    }
+    .field{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      padding: 10px 12px;
+    }
+    .field .title{
+      font-weight:650;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+    }
+    .field .title .value{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight:600;
+    }
+
+    select{
+      width:100%;
+      margin-top:8px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline:none;
+      appearance: none;
+    }
+    select:focus{
+      border-color: rgba(106,169,255,.55);
+      box-shadow: 0 0 0 3px rgba(106,169,255,.18);
+    }
+
+    input[type="range"]{
+      width:100%;
+      margin-top: 10px;
+      accent-color: var(--accent);
+    }
+
+    .toggleRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .tbtn{
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .tbtn.on{
+      color: var(--text);
+      background: rgba(106,169,255,.18);
+      border-color: rgba(106,169,255,.38);
+    }
+
+    canvas.history{
+      width: 100%;
+      height: 220px;
+      display:block;
+      margin-top: 10px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      background: rgba(0,0,0,.12);
+    }
+    @media (max-width: 520px){
+      canvas.history{ height: 160px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Strain Barometer</h1>
+      <div class="sub">Not “how am I doing as a person?” — just: “how loaded is the system today?”</div>
+    </div>
+    <div class="pillRow">
+      <div class="pill"><span class="label">Today</span> <strong id="todayLabel"></strong></div>
+      <div class="pill"><span class="label">Load</span> <strong id="statusLabel">—</strong></div>
+      <div class="pill"><span class="label">Commute</span> <strong id="commuteLabel">—</strong></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="col">
+      <div class="card">
+        <div class="row space">
+          <div>
+            <div class="label">Strain score</div>
+            <div class="big"><span id="scoreLabel">0</span> <span class="small">/ 100</span></div>
+          </div>
+          <div class="row" style="justify-content:flex-end;">
+            <span class="chip">local only</span>
+            <button id="saveBtn" class="primary">Save today</button>
+            <button id="resetBtn" class="danger">Reset today</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="label">System load</div>
+        <div class="barWrap" aria-label="Strain bar">
+          <div id="bar" class="bar"></div>
+        </div>
+
+        <div id="message" class="msg">
+          <span class="tone">—</span> <span id="messageText"></span>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          Tip: this is a *load meter*. High load means “protect inputs”, not “you failed”.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row space">
+          <div>
+            <div class="label">Caffeine</div>
+            <div class="small">Tap to count today’s caffeine units.</div>
+          </div>
+          <div class="row">
+            <button id="caffMinus" class="ghost">−</button>
+            <span class="chip"><strong id="caffLabel">0</strong> unit(s)</span>
+            <button id="caffPlus" class="ghost">+</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="label">Intake adequacy (from fuel tracker, but quick marker here)</div>
+        <div class="toggleRow" id="intakeRow">
+          <button class="tbtn" data-intake="under">Under</button>
+          <button class="tbtn" data-intake="ok">OK</button>
+          <button class="tbtn" data-intake="good">Good</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col">
+      <div class="card">
+        <div class="label">Today’s inputs</div>
+        <div class="fieldGrid">
+
+          <div class="field">
+            <div class="title">Commute <span class="value" id="commuteValue">No</span></div>
+            <div class="toggleRow" id="commuteRow">
+              <button class="tbtn" data-commute="no">No</button>
+              <button class="tbtn" data-commute="yes">Yes</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="title">On period <span class="value" id="periodValue">No</span></div>
+            <div class="toggleRow" id="periodRow">
+              <button class="tbtn" data-period="no">No</button>
+              <button class="tbtn" data-period="yes">Yes</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="title">Sleep quality <span class="value" id="sleepValue">Meh</span></div>
+            <select id="sleep">
+              <option value="good">Good</option>
+              <option value="meh" selected>Meh</option>
+              <option value="fragmented">Fragmented</option>
+              <option value="disaster">Disaster</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="title">Headache <span class="value" id="headacheValue">None</span></div>
+            <select id="headache">
+              <option value="none" selected>None</option>
+              <option value="mild">Mild</option>
+              <option value="heavy">Heavy</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="title">Brain fog <span class="value" id="fogValue">None</span></div>
+            <select id="fog">
+              <option value="none" selected>None</option>
+              <option value="some">Noticeable</option>
+              <option value="thick">Thick soup</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="title">Anger <span class="value" id="angerValue">None</span></div>
+            <select id="anger">
+              <option value="none" selected>None</option>
+              <option value="irritated">Irritated during day</option>
+              <option value="snap">End-of-day snap</option>
+              <option value="sustained">Sustained anger</option>
+            </select>
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Knee pain <span class="value" id="kneeValue">0</span></div>
+            <input id="knee" type="range" min="0" max="10" step="1" value="0" />
+            <div class="small">0 = fine, 10 = screaming bastard knee</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card" style="margin-top:14px;">
+    <div class="row space">
+      <div>
+        <div style="font-weight:700;">History</div>
+        <div class="small">Strain score (last 14 days)</div>
+      </div>
+      <div class="chip">local only</div>
+    </div>
+    <canvas id="historyChart" class="history" width="900" height="220"></canvas>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "strain_barometer_v1";
+
+  const DEFAULTS = {
+    // Weights (tweak later; this is v1 sensible)
+    weights: {
+      commute: 40,
+      period: 12,
+
+      sleep: { good: 0, meh: 8, fragmented: 16, disaster: 26 },
+      headache: { none: 0, mild: 10, heavy: 20 },
+      fog: { none: 0, some: 12, thick: 22 },
+      anger: { none: 0, irritated: 10, snap: 18, sustained: 26 },
+
+      kneePerPoint: 4,          // knee(0..10) -> 0..40
+      caffeinePerUnit: 3,       // small nudge upward
+      caffeineOver2Extra: 6,    // extra bump if >2
+
+      intake: { under: 10, ok: 0, good: -6 } // good intake can slightly buffer load
+    },
+
+    // Messaging bands
+    bands: [
+      { max: 39, label: "Green ✅", tone: "Stable", text: "System looks reasonably resourced. You may attempt ambitious tasks." },
+      { max: 69, label: "Yellow ⚠️", tone: "Moderate load", text: "Protect breaks. Keep tasks small and serial, not parallel." },
+      { max: 84, label: "Orange ⚠️", tone: "High load", text: "Reduce inputs. No heroic errands. Gentle food and early exits." },
+      { max: 100, label: "Red 🆘", tone: "Overloaded", text: "Low-power mode recommended. No big decisions; minimum viable day." }
+    ]
+  };
+
+  function todayKey(){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){
+      return null;
+    }
+  }
+
+  function saveState(state){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function initState(){
+    const key = todayKey();
+    const state = loadState() || {};
+    if(!state.days) state.days = {};
+    if(!state.days[key]){
+      state.days[key] = defaultDay();
+    } else {
+      // Patch missing fields if older
+      state.days[key] = { ...defaultDay(), ...state.days[key] };
+    }
+    saveState(state);
+    return state;
+  }
+
+  function defaultDay(){
+    return {
+      commute: "no",
+      period: "no",
+      sleep: "meh",
+      headache: "none",
+      fog: "none",
+      anger: "none",
+      knee: 0,
+      caffeine: 0,
+      intake: "ok",
+      lastSavedAt: null
+    };
+  }
+
+  function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+  let STATE = initState();
+  function day(){ return STATE.days[todayKey()]; }
+
+  function computeScore(d){
+    const w = DEFAULTS.weights;
+    let score = 0;
+
+    if(d.commute === "yes") score += w.commute;
+    if(d.period === "yes") score += w.period;
+
+    score += w.sleep[d.sleep] ?? 0;
+    score += w.headache[d.headache] ?? 0;
+    score += w.fog[d.fog] ?? 0;
+    score += w.anger[d.anger] ?? 0;
+
+    score += (Number(d.knee) || 0) * w.kneePerPoint;
+
+    const caf = Number(d.caffeine) || 0;
+    score += caf * w.caffeinePerUnit;
+    if(caf > 2) score += w.caffeineOver2Extra;
+
+    score += w.intake[d.intake] ?? 0;
+
+    return clamp(Math.round(score), 0, 100);
+  }
+
+  function bandFor(score){
+    for(const b of DEFAULTS.bands){
+      if(score <= b.max) return b;
+    }
+    return DEFAULTS.bands[DEFAULTS.bands.length-1];
+  }
+
+  function setToggleRow(rowEl, value, attrName){
+    rowEl.querySelectorAll("button").forEach(btn => {
+      const v = btn.getAttribute(`data-${attrName}`);
+      btn.classList.toggle("on", v === value);
+    });
+  }
+
+  function drawHistoryChart(){
+    const canvas = document.getElementById("historyChart");
+    if(!canvas) return;
+
+    const cssHeight = getComputedStyle(canvas).height;
+    const cssH = Math.max(120, parseInt(cssHeight, 10) || 220);
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const targetW = Math.max(300, Math.round(rect.width * dpr));
+    const targetH = Math.round(cssH * dpr);
+    if(canvas.width !== targetW || canvas.height !== targetH){
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
+
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+
+    const N = 14;
+    const pts = [];
+    const now = new Date();
+
+    for(let i=N-1;i>=0;i--){
+      const dt = new Date(now);
+      dt.setDate(now.getDate() - i);
+      const yyyy = dt.getFullYear();
+      const mm = String(dt.getMonth()+1).padStart(2,"0");
+      const dd = String(dt.getDate()).padStart(2,"0");
+      const key = `${yyyy}-${mm}-${dd}`;
+      const entry = STATE.days?.[key] ?? null;
+      const score = entry ? computeScore(entry) : null;
+      const commute = entry ? entry.commute : null;
+      pts.push({ key, score, commute });
+    }
+
+    const padLeft = Math.round(46 * dpr);
+    const pad = Math.round(18 * dpr);
+    const plotX0 = padLeft, plotY0 = pad;
+    const plotW = W - padLeft - pad, plotH = H - pad*2;
+
+    const xStep = plotW / (N-1);
+    const yFor = (v) => plotY0 + plotH - (v / 100) * plotH;
+
+    // Border
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1 * dpr;
+    ctx.strokeRect(plotX0, plotY0, plotW, plotH);
+
+    // Grid & labels (0,25,50,75,100)
+    ctx.font = `${12 * dpr}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1 * dpr;
+
+    for(const t of [0,25,50,75,100]){
+      const y = yFor(t);
+      ctx.beginPath();
+      ctx.moveTo(plotX0, y);
+      ctx.lineTo(plotX0 + plotW, y);
+      ctx.stroke();
+      ctx.fillText(String(t), Math.round(6 * dpr), y + Math.round(4 * dpr));
+    }
+
+    // Line
+    ctx.strokeStyle = "rgba(106,169,255,0.95)";
+    ctx.lineWidth = 2 * dpr;
+    ctx.beginPath();
+    pts.forEach((p, idx) => {
+      const v = p.score ?? 0;
+      const x = plotX0 + idx * xStep;
+      const y = yFor(v);
+      if(idx === 0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // Points
+    pts.forEach((p, idx) => {
+      const v = p.score ?? 0;
+      const x = plotX0 + idx * xStep;
+      const y = yFor(v);
+      ctx.beginPath();
+      ctx.fillStyle = (p.score === null) ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.9)";
+      ctx.arc(x, y, 3 * dpr, 0, Math.PI*2);
+      ctx.fill();
+
+      // Commute marker: tiny ring
+      if(p.score !== null && p.commute === "yes"){
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(255,209,102,0.95)";
+        ctx.lineWidth = 2 * dpr;
+        ctx.arc(x, y, 6 * dpr, 0, Math.PI*2);
+        ctx.stroke();
+      }
+    });
+
+    // X labels (every 3)
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    for(let i=0;i<N;i+=3){
+      const key = pts[i].key; // YYYY-MM-DD
+      const label = key.slice(8,10) + "-" + key.slice(5,7); // DD-MM
+      const x = plotX0 + i * xStep;
+      ctx.fillText(label, x - (14 * dpr), H - (6 * dpr));
+    }
+  }
+
+  function updateUI(){
+    const d = day();
+    const score = computeScore(d);
+    const band = bandFor(score);
+
+    const now = new Date();
+    const opts = { day:"2-digit", month:"short", year:"numeric" };
+    document.getElementById("todayLabel").textContent = now.toLocaleDateString(undefined, opts);
+
+    document.getElementById("scoreLabel").textContent = score;
+    document.getElementById("statusLabel").textContent = band.label;
+    document.getElementById("commuteLabel").textContent = (d.commute === "yes") ? "Yes" : "No";
+
+    // Bar
+    const bar = document.getElementById("bar");
+    bar.style.width = `${score}%`;
+    bar.classList.remove("good","warn","bad");
+    if(score <= 39) bar.classList.add("good");
+    else if(score <= 69) bar.classList.add("warn");
+    else bar.classList.add("bad");
+
+    // Message
+    const msgEl = document.getElementById("message");
+    msgEl.classList.remove("good","warn","bad");
+    if(score <= 39) msgEl.classList.add("good");
+    else if(score <= 69) msgEl.classList.add("warn");
+    else msgEl.classList.add("bad");
+    msgEl.querySelector(".tone").textContent = band.tone;
+    document.getElementById("messageText").textContent = " " + band.text;
+
+    // Inputs to UI
+    document.getElementById("sleep").value = d.sleep;
+    document.getElementById("headache").value = d.headache;
+    document.getElementById("fog").value = d.fog;
+    document.getElementById("anger").value = d.anger;
+
+    document.getElementById("sleepValue").textContent = labelSleep(d.sleep);
+    document.getElementById("headacheValue").textContent = labelHeadache(d.headache);
+    document.getElementById("fogValue").textContent = labelFog(d.fog);
+    document.getElementById("angerValue").textContent = labelAnger(d.anger);
+
+    document.getElementById("knee").value = d.knee;
+    document.getElementById("kneeValue").textContent = String(d.knee);
+
+    document.getElementById("caffLabel").textContent = String(d.caffeine);
+
+    document.getElementById("commuteValue").textContent = (d.commute === "yes") ? "Yes" : "No";
+    document.getElementById("periodValue").textContent = (d.period === "yes") ? "Yes" : "No";
+
+    setToggleRow(document.getElementById("commuteRow"), d.commute, "commute");
+    setToggleRow(document.getElementById("periodRow"), d.period, "period");
+    setToggleRow(document.getElementById("intakeRow"), d.intake, "intake");
+
+    drawHistoryChart();
+  }
+
+  function labelSleep(v){
+    return ({ good:"Good", meh:"Meh", fragmented:"Fragmented", disaster:"Disaster" }[v] || "Meh");
+  }
+  function labelHeadache(v){
+    return ({ none:"None", mild:"Mild", heavy:"Heavy" }[v] || "None");
+  }
+  function labelFog(v){
+    return ({ none:"None", some:"Noticeable", thick:"Thick soup" }[v] || "None");
+  }
+  function labelAnger(v){
+    return ({ none:"None", irritated:"Irritated", snap:"Snap", sustained:"Sustained" }[v] || "None");
+  }
+
+  function saveToday(){
+    day().lastSavedAt = Date.now();
+    saveState(STATE);
+    updateUI();
+  }
+
+  function resetToday(){
+    STATE.days[todayKey()] = defaultDay();
+    saveState(STATE);
+    updateUI();
+  }
+
+  function rollDayIfNeeded(){
+    const key = todayKey();
+    if(!STATE.days[key]){
+      STATE.days[key] = defaultDay();
+      saveState(STATE);
+    }
+  }
+
+  function wireEvents(){
+    // Selects
+    document.getElementById("sleep").addEventListener("change", (e) => {
+      day().sleep = e.target.value;
+      saveState(STATE); updateUI();
+    });
+    document.getElementById("headache").addEventListener("change", (e) => {
+      day().headache = e.target.value;
+      saveState(STATE); updateUI();
+    });
+    document.getElementById("fog").addEventListener("change", (e) => {
+      day().fog = e.target.value;
+      saveState(STATE); updateUI();
+    });
+    document.getElementById("anger").addEventListener("change", (e) => {
+      day().anger = e.target.value;
+      saveState(STATE); updateUI();
+    });
+
+    // Knee
+    document.getElementById("knee").addEventListener("input", (e) => {
+      day().knee = Number(e.target.value) || 0;
+      saveState(STATE); updateUI();
+    });
+
+    // Commute/Period/Intake toggles
+    document.getElementById("commuteRow").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      day().commute = btn.getAttribute("data-commute");
+      saveState(STATE); updateUI();
+    });
+
+    document.getElementById("periodRow").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      day().period = btn.getAttribute("data-period");
+      saveState(STATE); updateUI();
+    });
+
+    document.getElementById("intakeRow").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      day().intake = btn.getAttribute("data-intake");
+      saveState(STATE); updateUI();
+    });
+
+    // Caffeine
+    document.getElementById("caffPlus").addEventListener("click", () => {
+      day().caffeine = clamp((Number(day().caffeine)||0) + 1, 0, 10);
+      saveState(STATE); updateUI();
+    });
+    document.getElementById("caffMinus").addEventListener("click", () => {
+      day().caffeine = clamp((Number(day().caffeine)||0) - 1, 0, 10);
+      saveState(STATE); updateUI();
+    });
+
+    // Save/Reset
+    document.getElementById("saveBtn").addEventListener("click", saveToday);
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if(confirm("Reset today’s strain inputs?")){
+        resetToday();
+      }
+    });
+  }
+
+  // Boot
+  rollDayIfNeeded();
+  wireEvents();
+  updateUI();
+
+  setInterval(() => {
+    rollDayIfNeeded();
+    updateUI();
+  }, 60 * 1000);
+</script>
+</body>
+</html>
