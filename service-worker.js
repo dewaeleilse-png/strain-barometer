@@ -1,7 +1,8 @@
-const CACHE_NAME = "fuel-floor-tracker-v1";
+const CACHE_NAME = "strain-barometer-v1";
 const ASSETS = [
   "./",
   "./index.html",
+  "./strain.html",
   "./manifest.json",
   "./service-worker.js",
   "./icon-192.png",
