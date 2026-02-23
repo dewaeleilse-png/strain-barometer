@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Strain Barometer</title>
+  <title>Shield Strength</title>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -154,10 +154,6 @@
     }
     button:hover{ background: rgba(255,255,255,.09); }
     button:active{ transform: translateY(1px); }
-    button.primary{
-      background: rgba(106,169,255,.18);
-      border-color: rgba(106,169,255,.38);
-    }
     button.danger{
       background: rgba(255,92,122,.14);
       border-color: rgba(255,92,122,.38);
@@ -197,11 +193,6 @@
       gap:10px;
       align-items:center;
     }
-    .field .title .value{
-      color: var(--muted);
-      font-size: 12px;
-      font-weight:600;
-    }
 
     select{
       width:100%;
@@ -235,6 +226,7 @@
       padding: 8px 10px;
       font-size: 12px;
       color: var(--muted);
+      background: rgba(255,255,255,.03);
     }
     .tbtn.on{
       color: var(--text);
@@ -261,36 +253,39 @@
 <div class="wrap">
   <header>
     <div>
-      <h1>Strain Barometer</h1>
-      <div class="sub">Not “how am I doing as a person?” — just: “how loaded is my nervous system today?”</div>
+      <h1>Shield Strength</h1>
+      <div class="sub">Not “how am I doing as a person?” — just: “how intact is my shield today?”</div>
     </div>
     <div class="pillRow">
       <div class="pill"><span class="label">Today</span> <strong id="todayLabel"></strong></div>
-      <div class="pill"><span class="label">Load</span> <strong id="statusLabel">—</strong></div>
+      <div class="pill"><span class="label">Shield</span> <strong id="shieldPill">—</strong></div>
       <div class="pill"><span class="label">Commute</span> <strong id="commuteLabel">—</strong></div>
     </div>
   </header>
 
   <div class="grid">
-    <!-- LEFT -->
+    <!-- LEFT COLUMN -->
     <div class="col">
+      <!-- SHIELD SUMMARY -->
       <div class="card">
         <div class="row space">
           <div>
-            <div class="label">Strain score</div>
-            <div class="big"><span id="scoreLabel">0</span> <span class="small">/ 100</span></div>
+            <div class="label">Shield integrity</div>
+            <div class="big"><span id="shieldLabel">100</span> <span class="small">/ 100</span></div>
           </div>
           <div class="row" style="justify-content:flex-end;">
             <span class="chip">local only</span>
-            <button id="saveBtn" class="primary">Save today</button>
+            <button id="exportBtn" class="ghost">Export</button>
+            <button id="importBtn" class="ghost">Import</button>
+            <input id="importFile" type="file" accept="application/json" style="display:none" />
             <button id="resetBtn" class="danger">Reset today</button>
           </div>
         </div>
 
         <div class="hr"></div>
 
-        <div class="label">System load</div>
-        <div class="barWrap" aria-label="Strain bar">
+        <div class="label">Shield</div>
+        <div class="barWrap" aria-label="Shield bar">
           <div id="bar" class="bar"></div>
         </div>
 
@@ -299,50 +294,16 @@
         </div>
 
         <div class="small" style="margin-top:10px;">
-          This is a *load meter*. High load means “protect inputs”, not “you failed”.
+          Low shield = protect inputs. High shield = you can spend it, but don’t spend it all at once.
         </div>
       </div>
 
+      <!-- MODIFIERS -->
       <div class="card">
-        <div class="row space">
-          <div>
-            <div class="label">Caffeine</div>
-            <div class="small">Tap to count today’s caffeine units.</div>
-          </div>
-          <div class="row">
-            <button id="caffMinus" class="ghost">−</button>
-            <span class="chip"><strong id="caffLabel">0</strong> unit(s)</span>
-            <button id="caffPlus" class="ghost">+</button>
-          </div>
-        </div>
-
-        <div class="hr"></div>
-
-        <div class="label">Intake adequacy (refer to fuel tracker)</div>
-        <div class="toggleRow" id="intakeRow">
-          <button class="tbtn" data-intake="under">Under</button>
-          <button class="tbtn" data-intake="ok">OK</button>
-          <button class="tbtn" data-intake="good">Good</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT -->
-    <div class="col">
-      <div class="card">
-        <div class="label">Today’s inputs</div>
+        <div class="label">Modifiers</div>
         <div class="fieldGrid">
-
           <div class="field">
-            <div class="title">Commute <span class="value" id="commuteValue">No</span></div>
-            <div class="toggleRow" id="commuteRow">
-              <button class="tbtn" data-commute="no">No</button>
-              <button class="tbtn" data-commute="yes">Yes</button>
-            </div>
-          </div>
-
-          <div class="field">
-            <div class="title">On period <span class="value" id="periodValue">No</span></div>
+            <div class="title">On period</div>
             <div class="toggleRow" id="periodRow">
               <button class="tbtn" data-period="no">No</button>
               <button class="tbtn" data-period="yes">Yes</button>
@@ -350,7 +311,50 @@
           </div>
 
           <div class="field">
-            <div class="title">Sleep quality <span class="value" id="sleepValue">Meh</span></div>
+            <div class="title">Intake adequacy (from fuel tracker)</div>
+            <div class="toggleRow" id="intakeRow">
+              <button class="tbtn" data-intake="under">Under</button>
+              <button class="tbtn" data-intake="ok">OK</button>
+              <button class="tbtn" data-intake="good">Good</button>
+            </div>
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Caffeine</div>
+            <div class="toggleRow" style="justify-content:space-between; align-items:center;">
+              <button id="caffMinus" class="tbtn">−</button>
+              <span class="chip"><strong id="caffLabel">0</strong> unit(s)</span>
+              <button id="caffPlus" class="tbtn">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REDUCERS -->
+      <div class="card">
+        <div class="label">Reducers</div>
+        <div class="fieldGrid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Restorative activities</div>
+            <select id="restore">
+              <option value="0" selected>None</option>
+              <option value="1">A little (10–30 min)</option>
+              <option value="2">Decent (30–90 min)</option>
+              <option value="3">Proper dose (+90 min)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col">
+      <!-- BASELINE -->
+      <div class="card">
+        <div class="label">Baseline</div>
+        <div class="fieldGrid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Sleep quality</div>
             <select id="sleep">
               <option value="good">Good</option>
               <option value="meh" selected>Meh</option>
@@ -358,9 +362,55 @@
               <option value="disaster">Disaster</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      <!-- LOADS -->
+      <div class="card">
+        <div class="label">Loads</div>
+        <div class="fieldGrid">
+          <div class="field">
+            <div class="title">Commute</div>
+            <div class="toggleRow" id="commuteRow">
+              <button class="tbtn" data-commute="no">No</button>
+              <button class="tbtn" data-commute="yes">Yes</button>
+            </div>
+          </div>
 
           <div class="field">
-            <div class="title">Headache <span class="value" id="headacheValue">None</span></div>
+            <div class="title">People interactions</div>
+            <select id="people">
+              <option value="none">None</option>
+              <option value="low" selected>Low (a few chats)</option>
+              <option value="med">Medium (meetings, lots of talking)</option>
+              <option value="high">High (intense, crowds, conflict)</option>
+            </select>
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Anxiety / adrenaline</div>
+            <select id="anxiety">
+              <option value="none" selected>None</option>
+              <option value="low">Low</option>
+              <option value="med">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SYMPTOMS -->
+      <div class="card">
+        <div class="label">Symptoms</div>
+        <div class="fieldGrid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Knee pain</div>
+            <input id="pain" type="range" min="0" max="10" step="1" value="0" />
+            <div class="small">0 = fine, 10 = screaming</div>
+          </div>
+
+          <div class="field">
+            <div class="title">Headache</div>
             <select id="headache">
               <option value="none" selected>None</option>
               <option value="mild">Mild</option>
@@ -369,32 +419,16 @@
           </div>
 
           <div class="field">
-            <div class="title">Brain fog <span class="value" id="fogValue">None</span></div>
+            <div class="title">Brain fog</div>
             <select id="fog">
               <option value="none" selected>None</option>
               <option value="some">Noticeable</option>
               <option value="thick">Thick soup</option>
             </select>
           </div>
-
-          <div class="field">
-            <div class="title">Anger <span class="value" id="angerValue">None</span></div>
-            <select id="anger">
-              <option value="none" selected>None</option>
-              <option value="irritated">Irritated during day</option>
-              <option value="snap">End-of-day snap</option>
-              <option value="sustained">Sustained anger</option>
-            </select>
-          </div>
-
-          <div class="field" style="grid-column: 1 / -1;">
-            <div class="title">Knee pain <span class="value" id="kneeValue">0</span></div>
-            <input id="knee" type="range" min="0" max="10" step="1" value="0" />
-            <div class="small">0 = fine, 10 = screaming bastard knee</div>
-          </div>
-
         </div>
       </div>
+
     </div>
   </div>
 
@@ -403,7 +437,8 @@
     <div class="row space">
       <div>
         <div style="font-weight:700;">History</div>
-        <div class="small">Strain score (last 14 days)</div>
+        <div class="small">Shield integrity (last 14 days) - higher == better 🛡️</div>
+		<div class="small">Ring = the Great Commuting Tax</div>
       </div>
       <div class="chip">local only</div>
     </div>
@@ -415,29 +450,34 @@
   const STORAGE_KEY = "strain_barometer_v1";
 
   const DEFAULTS = {
-    // Weights (tweak later; this is v1 sensible)
+    // Damage weights (higher damage = lower shield)
     weights: {
-      commute: 40,
-      period: 12,
+      commute: 28,
+      period: 8,
 
       sleep: { good: 0, meh: 8, fragmented: 16, disaster: 26 },
       headache: { none: 0, mild: 10, heavy: 20 },
       fog: { none: 0, some: 12, thick: 22 },
-      anger: { none: 0, irritated: 10, snap: 18, sustained: 26 },
 
-      kneePerPoint: 4,          // knee(0..10) -> 0..40
-      caffeinePerUnit: 3,       // small nudge upward
-      caffeineOver2Extra: 6,    // extra bump if >2
+      people: { none: 0, low: 6, med: 14, high: 24 },
+      anxiety: { none: 0, low: 8, med: 18, high: 30 },
 
-      intake: { under: 10, ok: 0, good: -6 } // good intake can slightly buffer load
+      painPerPoint: 4,          // 0..10 -> 0..40 damage
+      caffeinePerUnit: 3,
+      caffeineOver2Extra: 6,
+
+      intake: { under: 10, ok: 0, good: -6 },
+
+      // Repair (negative damage) — health potion vibe
+      restore: { "0": 0, "1": -8, "2": -18, "3": -28 }
     },
 
-    // Messaging bands
+    // Shield bands (high shield = green)
     bands: [
-      { max: 39, label: "Green ✅", tone: "Stable", text: "System looks reasonably resourced. You may attempt ambitious tasks." },
-      { max: 69, label: "Yellow ⚠️", tone: "Moderate load", text: "Protect breaks. Keep tasks small and serial, not parallel." },
-      { max: 84, label: "Orange ⚠️", tone: "High load", text: "Reduce inputs. No heroic errands. Gentle food and early exits." },
-      { max: 100, label: "Red 🆘", tone: "Overloaded", text: "Low-power mode recommended. No big decisions; minimum viable day." }
+      { min: 80, label: "Green ✅", tone: "Shield stable", text: "You’ve got some buffer. Do the important thing, not all the things." },
+      { min: 55, label: "Yellow ⚠️", tone: "Shield dented", text: "Go serial, not parallel. Protect breaks and food." },
+      { min: 35, label: "Orange ⚠️", tone: "Shield low", text: "Inputs down. Smaller tasks. Earlier exits. Kindness to the body." },
+      { min: 0,  label: "Red 🆘", tone: "Shields failing", text: "Low-power mode. Minimum viable day. No big decisions." }
     ]
   };
 
@@ -449,34 +489,6 @@
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  function loadState(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return null;
-      return JSON.parse(raw);
-    }catch(e){
-      return null;
-    }
-  }
-
-  function saveState(state){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
-
-  function initState(){
-    const key = todayKey();
-    const state = loadState() || {};
-    if(!state.days) state.days = {};
-    if(!state.days[key]){
-      state.days[key] = defaultDay();
-    } else {
-      // Patch missing fields if older
-      state.days[key] = { ...defaultDay(), ...state.days[key] };
-    }
-    saveState(state);
-    return state;
-  }
-
   function defaultDay(){
     return {
       commute: "no",
@@ -484,45 +496,81 @@
       sleep: "meh",
       headache: "none",
       fog: "none",
-      anger: "none",
-      knee: 0,
+      pain: 0,
       caffeine: 0,
       intake: "ok",
-      lastSavedAt: null
+      people: "low",
+      anxiety: "none",
+      restore: "0"
     };
   }
 
   function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
 
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){ return null; }
+  }
+
+  function saveState(state){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function patchDay(obj){
+    return { ...defaultDay(), ...(obj || {}) };
+  }
+
+  function initState(){
+    const key = todayKey();
+    const state = loadState() || {};
+    if(!state.days) state.days = {};
+    state.days[key] = patchDay(state.days[key]);
+    saveState(state);
+    return state;
+  }
+
   let STATE = initState();
   function day(){ return STATE.days[todayKey()]; }
 
-  function computeScore(d){
+  function computeDamage(d){
     const w = DEFAULTS.weights;
-    let score = 0;
+    let damage = 0;
 
-    if(d.commute === "yes") score += w.commute;
-    if(d.period === "yes") score += w.period;
+    if(d.commute === "yes") damage += w.commute;
+    if(d.period === "yes") damage += w.period;
 
-    score += w.sleep[d.sleep] ?? 0;
-    score += w.headache[d.headache] ?? 0;
-    score += w.fog[d.fog] ?? 0;
-    score += w.anger[d.anger] ?? 0;
+    damage += w.sleep[d.sleep] ?? 0;
+    damage += w.headache[d.headache] ?? 0;
+    damage += w.fog[d.fog] ?? 0;
 
-    score += (Number(d.knee) || 0) * w.kneePerPoint;
+    damage += w.people[d.people] ?? 0;
+    damage += w.anxiety[d.anxiety] ?? 0;
+
+    damage += (Number(d.pain) || 0) * w.painPerPoint;
 
     const caf = Number(d.caffeine) || 0;
-    score += caf * w.caffeinePerUnit;
-    if(caf > 2) score += w.caffeineOver2Extra;
+    damage += caf * w.caffeinePerUnit;
+    if(caf > 2) damage += w.caffeineOver2Extra;
 
-    score += w.intake[d.intake] ?? 0;
+    damage += w.intake[d.intake] ?? 0;
 
-    return clamp(Math.round(score), 0, 100);
+    // Repair (negative damage)
+    damage += w.restore[d.restore] ?? 0;
+
+    return clamp(Math.round(damage), 0, 100);
   }
 
-  function bandFor(score){
+  function computeShield(d){
+    const damage = computeDamage(d);
+    return clamp(100 - damage, 0, 100);
+  }
+
+  function bandForShield(shield){
     for(const b of DEFAULTS.bands){
-      if(score <= b.max) return b;
+      if(shield >= b.min) return b;
     }
     return DEFAULTS.bands[DEFAULTS.bands.length-1];
   }
@@ -532,6 +580,47 @@
       const v = btn.getAttribute(`data-${attrName}`);
       btn.classList.toggle("on", v === value);
     });
+  }
+
+  function exportData(){
+    const blob = new Blob([JSON.stringify(STATE, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "shield-strength-backup.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function importDataFromFile(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(String(reader.result || ""));
+        if(!parsed || typeof parsed !== "object" || !parsed.days){
+          alert("That file doesn’t look like a Shield Strength backup.");
+          return;
+        }
+
+        // Patch imported days so older backups gain new fields safely
+        const patched = { days: {} };
+        for(const [k, v] of Object.entries(parsed.days)){
+          patched.days[k] = patchDay(v);
+        }
+        STATE = patched;
+
+        // Ensure today exists
+        rollDayIfNeeded();
+        saveState(STATE);
+        updateUI();
+        alert("Import complete.");
+      }catch(e){
+        alert("Could not read that JSON file.");
+      }
+    };
+    reader.readAsText(file);
   }
 
   function drawHistoryChart(){
@@ -566,9 +655,9 @@
       const dd = String(dt.getDate()).padStart(2,"0");
       const key = `${yyyy}-${mm}-${dd}`;
       const entry = STATE.days?.[key] ?? null;
-      const score = entry ? computeScore(entry) : null;
+      const shield = entry ? computeShield(entry) : null;
       const commute = entry ? entry.commute : null;
-      pts.push({ key, score, commute });
+      pts.push({ key, shield, commute });
     }
 
     const padLeft = Math.round(46 * dpr);
@@ -590,13 +679,16 @@
     ctx.strokeStyle = "rgba(255,255,255,0.08)";
     ctx.lineWidth = 1 * dpr;
 
-    for(const t of [0,25,50,75,100]){
+    for(const t of [100,75,50,25,0]){
       const y = yFor(t);
       ctx.beginPath();
       ctx.moveTo(plotX0, y);
       ctx.lineTo(plotX0 + plotW, y);
       ctx.stroke();
-      ctx.fillText(String(t), Math.round(6 * dpr), y + Math.round(4 * dpr));
+      const label = (t === 100) ? "100 (full)" :
+              (t === 0) ? "0 (empty)" :
+              String(t);
+	ctx.fillText(label, Math.round(6 * dpr), y + Math.round(4 * dpr));
     }
 
     // Line
@@ -604,7 +696,7 @@
     ctx.lineWidth = 2 * dpr;
     ctx.beginPath();
     pts.forEach((p, idx) => {
-      const v = p.score ?? 0;
+      const v = p.shield ?? 0;
       const x = plotX0 + idx * xStep;
       const y = yFor(v);
       if(idx === 0) ctx.moveTo(x,y);
@@ -612,18 +704,18 @@
     });
     ctx.stroke();
 
-    // Points
+    // Points + commute ring
     pts.forEach((p, idx) => {
-      const v = p.score ?? 0;
+      const v = p.shield ?? 0;
       const x = plotX0 + idx * xStep;
       const y = yFor(v);
+
       ctx.beginPath();
-      ctx.fillStyle = (p.score === null) ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.9)";
+      ctx.fillStyle = (p.shield === null) ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.9)";
       ctx.arc(x, y, 3 * dpr, 0, Math.PI*2);
       ctx.fill();
 
-      // Commute marker: tiny ring
-      if(p.score !== null && p.commute === "yes"){
+      if(p.shield !== null && p.commute === "yes"){
         ctx.beginPath();
         ctx.strokeStyle = "rgba(255,209,102,0.95)";
         ctx.lineWidth = 2 * dpr;
@@ -644,30 +736,30 @@
 
   function updateUI(){
     const d = day();
-    const score = computeScore(d);
-    const band = bandFor(score);
+    const shield = computeShield(d);
+    const band = bandForShield(shield);
 
     const now = new Date();
     const opts = { day:"2-digit", month:"short", year:"numeric" };
     document.getElementById("todayLabel").textContent = now.toLocaleDateString(undefined, opts);
 
-    document.getElementById("scoreLabel").textContent = score;
-    document.getElementById("statusLabel").textContent = band.label;
+    document.getElementById("shieldLabel").textContent = shield;
+    document.getElementById("shieldPill").textContent = band.label;
     document.getElementById("commuteLabel").textContent = (d.commute === "yes") ? "Yes" : "No";
 
     // Bar
     const bar = document.getElementById("bar");
-    bar.style.width = `${score}%`;
+    bar.style.width = `${shield}%`;
     bar.classList.remove("good","warn","bad");
-    if(score <= 39) bar.classList.add("good");
-    else if(score <= 69) bar.classList.add("warn");
+    if(shield >= 80) bar.classList.add("good");
+    else if(shield >= 55) bar.classList.add("warn");
     else bar.classList.add("bad");
 
     // Message
     const msgEl = document.getElementById("message");
     msgEl.classList.remove("good","warn","bad");
-    if(score <= 39) msgEl.classList.add("good");
-    else if(score <= 69) msgEl.classList.add("warn");
+    if(shield >= 80) msgEl.classList.add("good");
+    else if(shield >= 55) msgEl.classList.add("warn");
     else msgEl.classList.add("bad");
     msgEl.querySelector(".tone").textContent = band.tone;
     document.getElementById("messageText").textContent = " " + band.text;
@@ -676,45 +768,19 @@
     document.getElementById("sleep").value = d.sleep;
     document.getElementById("headache").value = d.headache;
     document.getElementById("fog").value = d.fog;
-    document.getElementById("anger").value = d.anger;
+    document.getElementById("pain").value = d.pain;
 
-    document.getElementById("sleepValue").textContent = labelSleep(d.sleep);
-    document.getElementById("headacheValue").textContent = labelHeadache(d.headache);
-    document.getElementById("fogValue").textContent = labelFog(d.fog);
-    document.getElementById("angerValue").textContent = labelAnger(d.anger);
-
-    document.getElementById("knee").value = d.knee;
-    document.getElementById("kneeValue").textContent = String(d.knee);
+    document.getElementById("people").value = d.people;
+    document.getElementById("anxiety").value = d.anxiety;
+    document.getElementById("restore").value = d.restore;
 
     document.getElementById("caffLabel").textContent = String(d.caffeine);
-
-    document.getElementById("commuteValue").textContent = (d.commute === "yes") ? "Yes" : "No";
-    document.getElementById("periodValue").textContent = (d.period === "yes") ? "Yes" : "No";
 
     setToggleRow(document.getElementById("commuteRow"), d.commute, "commute");
     setToggleRow(document.getElementById("periodRow"), d.period, "period");
     setToggleRow(document.getElementById("intakeRow"), d.intake, "intake");
 
     drawHistoryChart();
-  }
-
-  function labelSleep(v){
-    return ({ good:"Good", meh:"Meh", fragmented:"Fragmented", disaster:"Disaster" }[v] || "Meh");
-  }
-  function labelHeadache(v){
-    return ({ none:"None", mild:"Mild", heavy:"Heavy" }[v] || "None");
-  }
-  function labelFog(v){
-    return ({ none:"None", some:"Noticeable", thick:"Thick soup" }[v] || "None");
-  }
-  function labelAnger(v){
-    return ({ none:"None", irritated:"Irritated", snap:"Snap", sustained:"Sustained" }[v] || "None");
-  }
-
-  function saveToday(){
-    day().lastSavedAt = Date.now();
-    saveState(STATE);
-    updateUI();
   }
 
   function resetToday(){
@@ -728,57 +794,59 @@
     if(!STATE.days[key]){
       STATE.days[key] = defaultDay();
       saveState(STATE);
+    }else{
+      // Patch in case fields changed
+      STATE.days[key] = patchDay(STATE.days[key]);
+      saveState(STATE);
     }
   }
 
   function wireEvents(){
     // Selects
     document.getElementById("sleep").addEventListener("change", (e) => {
-      day().sleep = e.target.value;
-      saveState(STATE); updateUI();
+      day().sleep = e.target.value; saveState(STATE); updateUI();
     });
     document.getElementById("headache").addEventListener("change", (e) => {
-      day().headache = e.target.value;
-      saveState(STATE); updateUI();
+      day().headache = e.target.value; saveState(STATE); updateUI();
     });
     document.getElementById("fog").addEventListener("change", (e) => {
-      day().fog = e.target.value;
-      saveState(STATE); updateUI();
+      day().fog = e.target.value; saveState(STATE); updateUI();
     });
-    document.getElementById("anger").addEventListener("change", (e) => {
-      day().anger = e.target.value;
-      saveState(STATE); updateUI();
+    document.getElementById("people").addEventListener("change", (e) => {
+      day().people = e.target.value; saveState(STATE); updateUI();
     });
-
-    // Knee
-    document.getElementById("knee").addEventListener("input", (e) => {
-      day().knee = Number(e.target.value) || 0;
-      saveState(STATE); updateUI();
+    document.getElementById("anxiety").addEventListener("change", (e) => {
+      day().anxiety = e.target.value; saveState(STATE); updateUI();
+    });
+    document.getElementById("restore").addEventListener("change", (e) => {
+      day().restore = e.target.value; saveState(STATE); updateUI();
     });
 
-    // Commute/Period/Intake toggles
+    // pain
+    document.getElementById("pain").addEventListener("input", (e) => {
+      day().pain = Number(e.target.value) || 0; saveState(STATE); updateUI();
+    });
+
+    // Toggle rows
     document.getElementById("commuteRow").addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if(!btn) return;
+      const btn = e.target.closest("button"); if(!btn) return;
       day().commute = btn.getAttribute("data-commute");
       saveState(STATE); updateUI();
     });
 
     document.getElementById("periodRow").addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if(!btn) return;
+      const btn = e.target.closest("button"); if(!btn) return;
       day().period = btn.getAttribute("data-period");
       saveState(STATE); updateUI();
     });
 
     document.getElementById("intakeRow").addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if(!btn) return;
+      const btn = e.target.closest("button"); if(!btn) return;
       day().intake = btn.getAttribute("data-intake");
       saveState(STATE); updateUI();
     });
 
-    // Caffeine
+    // Caffeine stepper
     document.getElementById("caffPlus").addEventListener("click", () => {
       day().caffeine = clamp((Number(day().caffeine)||0) + 1, 0, 10);
       saveState(STATE); updateUI();
@@ -788,10 +856,20 @@
       saveState(STATE); updateUI();
     });
 
-    // Save/Reset
-    document.getElementById("saveBtn").addEventListener("click", saveToday);
+    // Export/Import
+    document.getElementById("exportBtn").addEventListener("click", exportData);
+    document.getElementById("importBtn").addEventListener("click", () => {
+      document.getElementById("importFile").click();
+    });
+    document.getElementById("importFile").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if(file) importDataFromFile(file);
+      e.target.value = "";
+    });
+
+    // Reset
     document.getElementById("resetBtn").addEventListener("click", () => {
-      if(confirm("Reset today’s strain inputs?")){
+      if(confirm("Reset today’s inputs?")){
         resetToday();
       }
     });
@@ -809,4 +887,3 @@
 </script>
 </body>
 </html>
-
