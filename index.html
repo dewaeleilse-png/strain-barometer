@@ -276,8 +276,7 @@
   </header>
 
   <div class="grid">
-    <!-- LEFT COLUMN -->
-    <div class="col">
+    
       <!-- SHIELD SUMMARY -->
       <div class="card order-shield">
         <div class="row space">
@@ -309,59 +308,8 @@
           Low shield = protect inputs. High shield = you can spend it, but don’t spend it all at once.
         </div>
       </div>
-
-      <!-- MODIFIERS -->
-      <div class="card order-mods">
-        <div class="label">Modifiers</div>
-        <div class="fieldGrid">
-          <div class="field">
-            <div class="title">On period</div>
-            <div class="toggleRow" id="periodRow">
-              <button class="tbtn" data-period="no">No</button>
-              <button class="tbtn" data-period="yes">Yes</button>
-            </div>
-          </div>
-
-          <div class="field">
-            <div class="title">Intake adequacy (from fuel tracker)</div>
-            <div class="toggleRow" id="intakeRow">
-              <button class="tbtn" data-intake="under">Under</button>
-              <button class="tbtn" data-intake="ok">OK</button>
-              <button class="tbtn" data-intake="good">Good</button>
-            </div>
-          </div>
-
-          <div class="field" style="grid-column: 1 / -1;">
-            <div class="title">Caffeine</div>
-            <div class="toggleRow" style="justify-content:space-between; align-items:center;">
-              <button id="caffMinus" class="tbtn">−</button>
-              <span class="chip"><strong id="caffLabel">0</strong> unit(s)</span>
-              <button id="caffPlus" class="tbtn">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- REDUCERS -->
-      <div class="card order-reducers" >
-        <div class="label">Reducers</div>
-        <div class="fieldGrid">
-          <div class="field" style="grid-column: 1 / -1;">
-            <div class="title">Restorative activities</div>
-            <select id="restore">
-              <option value="0" selected>None</option>
-              <option value="1">A little (10–30 min)</option>
-              <option value="2">Decent (30–90 min)</option>
-              <option value="3">Proper dose (+90 min)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COLUMN -->
-    <div class="col">
-      <!-- BASELINE -->
+	  
+	  <!-- BASELINE -->
       <div class="card order-baseline">
         <div class="label">Baseline</div>
         <div class="fieldGrid">
@@ -376,8 +324,8 @@
           </div>
         </div>
       </div>
-
-      <!-- LOADS -->
+	  
+	  <!-- LOADS -->
       <div class="card order-loads">
         <div class="label">Loads</div>
         <div class="fieldGrid">
@@ -440,6 +388,57 @@
           </div>
         </div>
       </div>
+
+      <!-- MODIFIERS -->
+      <div class="card order-mods">
+        <div class="label">Modifiers</div>
+        <div class="fieldGrid">
+          <div class="field">
+            <div class="title">On period</div>
+            <div class="toggleRow" id="periodRow">
+              <button class="tbtn" data-period="no">No</button>
+              <button class="tbtn" data-period="yes">Yes</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="title">Intake adequacy (from fuel tracker)</div>
+            <div class="toggleRow" id="intakeRow">
+              <button class="tbtn" data-intake="under">Under</button>
+              <button class="tbtn" data-intake="ok">OK</button>
+              <button class="tbtn" data-intake="good">Good</button>
+            </div>
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Caffeine</div>
+            <div class="toggleRow" style="justify-content:space-between; align-items:center;">
+              <button id="caffMinus" class="tbtn">−</button>
+              <span class="chip"><strong id="caffLabel">0</strong> unit(s)</span>
+              <button id="caffPlus" class="tbtn">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REDUCERS -->
+      <div class="card order-reducers" >
+        <div class="label">Reducers</div>
+        <div class="fieldGrid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <div class="title">Restorative activities</div>
+            <select id="restore">
+              <option value="0" selected>None</option>
+              <option value="1">A little (10–30 min)</option>
+              <option value="2">Decent (30–90 min)</option>
+              <option value="3">Proper dose (+90 min)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        
 
     </div>
   </div>
@@ -505,13 +504,13 @@
     return {
       commute: "no",
       period: "no",
-      sleep: "meh",
+      sleep: "good",
       headache: "none",
       fog: "none",
       pain: 0,
       caffeine: 0,
       intake: "ok",
-      people: "low",
+      people: "none",
       anxiety: "none",
       restore: "0"
     };
