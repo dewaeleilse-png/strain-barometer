@@ -246,6 +246,18 @@
     @media (max-width: 520px){
       canvas.history{ height: 160px; }
     }
+	
+	/* Mobile-only order control */
+	   @media (max-width: 860px){
+	  .order-shield   { order: 0; }
+	  .order-baseline { order: 1; }
+	  .order-loads    { order: 2; }
+	  .order-symptoms { order: 3; }
+	  .order-mods     { order: 4; }
+	  .order-reducers { order: 5; }
+	}
+	
+	
   </style>
 </head>
 
@@ -267,7 +279,7 @@
     <!-- LEFT COLUMN -->
     <div class="col">
       <!-- SHIELD SUMMARY -->
-      <div class="card">
+      <div class="card order-shield">
         <div class="row space">
           <div>
             <div class="label">Shield integrity</div>
@@ -299,7 +311,7 @@
       </div>
 
       <!-- MODIFIERS -->
-      <div class="card">
+      <div class="card order-mods">
         <div class="label">Modifiers</div>
         <div class="fieldGrid">
           <div class="field">
@@ -331,7 +343,7 @@
       </div>
 
       <!-- REDUCERS -->
-      <div class="card">
+      <div class="card order-reducers" >
         <div class="label">Reducers</div>
         <div class="fieldGrid">
           <div class="field" style="grid-column: 1 / -1;">
@@ -350,7 +362,7 @@
     <!-- RIGHT COLUMN -->
     <div class="col">
       <!-- BASELINE -->
-      <div class="card">
+      <div class="card order-baseline">
         <div class="label">Baseline</div>
         <div class="fieldGrid">
           <div class="field" style="grid-column: 1 / -1;">
@@ -366,7 +378,7 @@
       </div>
 
       <!-- LOADS -->
-      <div class="card">
+      <div class="card order-loads">
         <div class="label">Loads</div>
         <div class="fieldGrid">
           <div class="field">
@@ -400,7 +412,7 @@
       </div>
 
       <!-- SYMPTOMS -->
-      <div class="card">
+      <div class="card order-symptoms">
         <div class="label">Symptoms</div>
         <div class="fieldGrid">
           <div class="field" style="grid-column: 1 / -1;">
