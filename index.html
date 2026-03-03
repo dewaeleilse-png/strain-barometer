@@ -305,7 +305,7 @@
         </div>
 
         <div class="small" style="margin-top:10px;">
-          Low shield = protect inputs. High shield = you can spend it, but don’t spend it all at once.
+          Low shields = protect inputs. High shields = don’t spend it all at once :)
         </div>
       </div>
 	  
@@ -322,7 +322,17 @@
               <option value="disaster">Disaster</option>
             </select>
           </div>
-        </div>
+        
+		<div class="field" style="grid-column: 1 / -1;">
+		  <div class="title">Yesterday's intake</div>
+		  <div class="toggleRow" id="intakeRow">
+			<button class="tbtn" data-intake="under">Underfuelled (red)</button>
+			<button class="tbtn" data-intake="ok">OK (yellow)</button>
+			<button class="tbtn" data-intake="good">Good (green)</button>
+		  </div>
+		</div>
+		
+		</div>
       </div>
 	  
 	  <!-- LOADS -->
@@ -401,16 +411,7 @@
             </div>
           </div>
 
-          <div class="field">
-            <div class="title">Intake adequacy (from fuel tracker)</div>
-            <div class="toggleRow" id="intakeRow">
-              <button class="tbtn" data-intake="under">Under</button>
-              <button class="tbtn" data-intake="ok">OK</button>
-              <button class="tbtn" data-intake="good">Good</button>
-            </div>
-          </div>
-
-          <div class="field" style="grid-column: 1 / -1;">
+                    <div class="field" style="grid-column: 1 / -1;">
             <div class="title">Caffeine</div>
             <div class="toggleRow" style="justify-content:space-between; align-items:center;">
               <button id="caffMinus" class="tbtn">−</button>
@@ -477,19 +478,39 @@
       caffeinePerUnit: 3,
       caffeineOver2Extra: 6,
 
-      intake: { under: 10, ok: 0, good: -6 },
+      intake: { under: 10, ok: 0, good: -5 },
 
       // Repair (negative damage) — health potion vibe
       restore: { "0": 0, "1": -8, "2": -18, "3": -28 }
     },
 
     // Shield bands (high shield = green)
-    bands: [
-      { min: 80, label: "Green ✅", tone: "Shield stable", text: "You’ve got some buffer. Do the important thing, not all the things." },
-      { min: 55, label: "Yellow ⚠️", tone: "Shield dented", text: "Go serial, not parallel. Protect breaks and food." },
-      { min: 35, label: "Orange ⚠️", tone: "Shield low", text: "Inputs down. Smaller tasks. Earlier exits. Kindness to the body." },
-      { min: 0,  label: "Red 🆘", tone: "Shields failing", text: "Low-power mode. Minimum viable day. No big decisions." }
-    ]
+	bands: [
+	  {
+		min: 80,
+		label: "Green ✅",
+		tone: "Shields steady",
+		text: "Hull integrity holding nicely. You’ve got buffer. Do the important thing — not ALL the things. No, really, don't :)"
+	  },
+	  {
+		min: 55,
+		label: "Yellow ⚠️",
+		tone: "Shields scuffed",
+		text: "Minor temporal turbulence detected. Go serial, not parallel. Eat. Pause. You are not required to save the universe before tea."
+	  },
+	  {
+		min: 35,
+		label: "Orange ⚠️",
+		tone: "Shields strained",
+		text: "Energy reserves low. Reduce external inputs. Smaller tasks. Earlier exits. Be annoyingly kind to yourself."
+	  },
+	  {
+		min: 0,
+		label: "Red 🆘",
+		tone: "Shields critical",
+		text: "Emergency protocol engaged. Minimum viable day. No heroic speeches, no dramatic leaps. Stabilise first."
+	  }
+	]
   };
 
   function todayKey(){
